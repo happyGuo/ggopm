@@ -8,12 +8,16 @@ import (
 
 	"ggopm/action"
 	"ggopm/msg"
-	"ggopm/repo"
+	//"ggopm/repo"
+	//"ggopm/cfg"
+	"github.com/Masterminds/glide/repo"
 )
 
 var version = "0.1.0-dev"
 
 func main() {
+	action.Create(".", true)
+
 	app := cli.NewApp()
 	app.Name = "ggopm"
 	app.Version = version
@@ -47,12 +51,13 @@ func commands() []cli.Command {
 			},
 		},
 		{
-			Name:  "install, c",
+			Name:  "install, i",
 			Usage: "安装依赖包到指定目录，不指定则在GOAPTH的第一个目录",
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  "path",
 					Usage: "安装到指定目录",
+
 				},
 				cli.BoolFlag{
 					Name:  "skip-p",
@@ -64,11 +69,14 @@ func commands() []cli.Command {
 				if c.String("path") != "" {
 					msg.Warn("依赖包将会安装到=>" + c.String("path"))
 				}
-				installer := repo.NewInstaller()
-				installer.Force = c.Bool("force")
-				installer.Home = c.GlobalString("home")
 
-				action.Install(installer, c.Bool("strip-vendor"))
+				//仓库的installer 对象
+				//installer := repo.NewInstaller()
+				//设置installer的参数
+				//installer.Force = c.Bool("force")
+				//installer.Home = c.GlobalString("home")
+				//开始安装包
+				//action.Install(installer, c.Bool("strip-vendor"))
 
 				return nil
 			},
@@ -109,14 +117,15 @@ func commands() []cli.Command {
 			},
 
 			Action: func(c *cli.Context) error {
-				if c.String("path") != "" {
-					msg.Warn("包将会安装到=>" + c.String("path"))
+				if c.Bool("path") {
+					//if cfg.GetPath()!="" {
+					//	msg.Warn("包将会安装到=>" + c.String("path"))
+					//}
+
 				}
 				installer := repo.NewInstaller()
-				installer.Force = c.Bool("force")
-				installer.Home = c.GlobalString("home")
 
-				action.Install(installer, c.Bool("strip-vendor"))
+				action.Install(installer, c.Bool("path"))
 
 				return nil
 			},

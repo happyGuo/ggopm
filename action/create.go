@@ -2,42 +2,37 @@ package action
 
 import (
 	"os"
-	"path/filepath"
+	//"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/Masterminds/glide/cfg"
 	"github.com/Masterminds/glide/dependency"
-	"github.com/Masterminds/glide/gb"
-	"github.com/Masterminds/glide/godep"
-	"github.com/Masterminds/glide/gpm"
 	"github.com/Masterminds/glide/msg"
 	gpath "github.com/Masterminds/glide/path"
 	"github.com/Masterminds/glide/util"
+	//"fmt"
 )
 
 
 func Create(base string, skipScan bool) {
-	glidefile := gpath.GlideFile
-	// Guard against overwrites.
-	guardYAML(glidefile)
+	//文件路径
+	config := gpath.GlideFile
+	// 检查是否存在
+	//guardYAML(config)
 
-	// Guess deps
+	//跳过扫描，生成空配置文件
+	if skipScan {
+
+	}
+	// 检查依赖
 	conf := guessDeps(base, skipScan)
-	// Write YAML
-	msg.Info("Writing configuration file (%s)", glidefile)
-	if err := conf.WriteFile(glidefile); err != nil {
-		msg.Die("Could not save %s: %s", glidefile, err)
+
+	msg.Info("写入配置文件 (%s)", config)
+	if err := conf.WriteFile(config); err != nil {
+		msg.Die("写入失败 %s: %s", config, err)
 	}
 
-	var res bool
-
-	if !res {
-		msg.Info("You can now edit the glide.yaml file. Consider:")
-		msg.Info("--> Using versions and ranges. See https://glide.sh/docs/versions/")
-		msg.Info("--> Adding additional metadata. See https://glide.sh/docs/glide.yaml/")
-		msg.Info("--> Running the config-wizard command to improve the versions in your configuration")
-	}
 }
 
 // guardYAML fails if the given file already exists.
@@ -63,6 +58,7 @@ func guessDeps(base string, skipImport bool) *cfg.Config {
 	}
 	name := buildContext.PackageName(base)
 
+
 	msg.Info("Generating a YAML configuration file and guessing the dependencies")
 
 	config := new(cfg.Config)
@@ -85,13 +81,15 @@ func guessDeps(base string, skipImport bool) *cfg.Config {
 		msg.Info("Scanning code to look for dependencies not found in import")
 	}
 
-	// Resolve dependencies by looking at the tree.
+	// 返回依赖解析器
 	r, err := dependency.NewResolver(base)
+
+
 	if err != nil {
 		msg.Die("Error creating a dependency resolver: %s", err)
 	}
 
-	// When creating resolve the test dependencies as well as the application ones.
+	// 初始化以测试模式
 	r.ResolveTest = true
 
 	h := &dependency.DefaultMissingPackageHandler{Missing: []string{}, Gopath: []string{}}
@@ -99,7 +97,7 @@ func guessDeps(base string, skipImport bool) *cfg.Config {
 
 	sortable, testSortable, err := r.ResolveLocal(false)
 	if err != nil {
-		msg.Die("Error resolving local dependencies: %s", err)
+		msg.Die("分析本地依赖失败: %s", err)
 	}
 
 	sort.Strings(sortable)
@@ -172,22 +170,8 @@ func guessDeps(base string, skipImport bool) *cfg.Config {
 func guessImportDeps(base string, config *cfg.Config) {
 	msg.Info("Attempting to import from other package managers (use --skip-import to skip)")
 	deps := []*cfg.Dependency{}
-	absBase, err := filepath.Abs(base)
-	if err != nil {
-		msg.Die("Failed to resolve location of %s: %s", base, err)
-	}
+	//absBase, err := filepath.Abs(base)
 
-	if d, ok := guessImportGodep(absBase); ok {
-		msg.Info("Importing Godep configuration")
-		msg.Warn("Godep uses commit id versions. Consider using Semantic Versions with Glide")
-		deps = d
-	} else if d, ok := guessImportGPM(absBase); ok {
-		msg.Info("Importing GPM configuration")
-		deps = d
-	} else if d, ok := guessImportGB(absBase); ok {
-		msg.Info("Importing GB configuration")
-		deps = d
-	}
 
 	for _, i := range deps {
 		if i.Reference == "" {
@@ -200,29 +184,4 @@ func guessImportDeps(base string, config *cfg.Config) {
 	}
 }
 
-func guessImportGodep(dir string) ([]*cfg.Dependency, bool) {
-	d, err := godep.Parse(dir)
-	if err != nil || len(d) == 0 {
-		return []*cfg.Dependency{}, false
-	}
 
-	return d, true
-}
-
-func guessImportGPM(dir string) ([]*cfg.Dependency, bool) {
-	d, err := gpm.Parse(dir)
-	if err != nil || len(d) == 0 {
-		return []*cfg.Dependency{}, false
-	}
-
-	return d, true
-}
-
-func guessImportGB(dir string) ([]*cfg.Dependency, bool) {
-	d, err := gb.Parse(dir)
-	if err != nil || len(d) == 0 {
-		return []*cfg.Dependency{}, false
-	}
-
-	return d, true
-}
