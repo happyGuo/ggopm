@@ -1,0 +1,13 @@
+host = "zhangyue.com"
+
+[[import]]
+package = "github.com/codegangsta/cli"
+version = "1.16.0"
+vcs = "git"
+repo = "github.com/codegangsta/cli"
+
+[[import]]
+package = "github.com/codegangsta/cli"
+version = "1.16.0"
+vcs = "git"
+repo = "github.com/codegangsta/cli"
